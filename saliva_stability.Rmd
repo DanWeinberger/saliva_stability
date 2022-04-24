@@ -1,0 +1,141 @@
+---
+title: "saliva_stability"
+author: "Dan Weinberger"
+date: "4/23/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(readxl)
+```
+
+Freeze-thaw Key
+Glycerol: 1 - with glycerol
+Glycerol: 0 - without glycerol
+Temperature: 2  -80ºC
+Temperature: 1  -20ºC
+Freeze-thaw Cycle: 0-3
+Concentration: CFU/mL
+Time: Hours
+
+
+Timecourse Key
+Temperature: 1 - 4ºC
+Temperature: 2-  Room temperature
+Time: Hours
+Concentration: CFU/mL
+
+
+```{r}
+a1 <- read_excel('./Data/Spn stability analysis for R.xlsx')
+a1$piab <- as.numeric(a1$piab)
+
+a1 <- a1[a1$Temperature %in% c(1,2),]
+
+a1$Serotype <- as.factor(a1$Serotype)
+a1$cycle <- as.factor(a1$cycle)
+a1$Temperature<- as.factor(a1$Temperature)
+a1$glycerol<- as.factor(a1$glycerol)
+
+a1$concentration<- as.factor(a1$concentration)
+
+```
+
+```{r}
+
+ggplot(a1, aes(x=cycle, y=piab, group=Serotype, color=Serotype))+
+  geom_point(aes(shape=concentration)) +
+  theme_classic() +
+  facet_grid(glycerol~Serotype) +
+  geom_hline(yintercept = 40, lty=2, col='gray')
+```
+
+Base model
+
+```{r}
+mod1 <- lm(piab ~ Serotype + Temperature + glycerol +cycle +concentration, data=a1)
+
+summary(mod1)
+```
+Does the inclusion of glycerol to the saliva samples make a difference to viability of the pneumococcus? Doesn't appear to
+
+```{r}
+mod2 <- lm(piab ~ Serotype + Temperature + concentration+ glycerol +cycle + glycerol*cycle , data=a1)
+
+summary(mod2)
+
+# mod2a <- lm(piab ~ Serotype + Temperature + concentration+ glycerol +cycle + concentration*cycle , data=a1)
+# 
+# summary(mod2a)
+
+# mod3 <- lm(piab ~ Serotype + Temperature + concentration+ glycerol +cycle + glycerol*concentration*cycle , data=a1)
+# 
+# summary(mod3)
+```
+
+Does temp affect stability 
+```{r}
+mod4 <- lm(piab ~ Serotype + Temperature + concentration+ glycerol +cycle + Temperature*cycle , data=a1)
+
+summary(mod4)
+```
+Does serotype affect survival
+```{r}
+mod4 <- lm(piab ~ Serotype + Temperature + concentration+ glycerol +cycle + Serotype*cycle , data=a1)
+
+summary(mod4)
+```
+
+
+
+```{r}
+b1 <- read_excel('./Data/Spn stability analysis for R.xlsx', sheet='Timecourse')
+
+b1$piaB <- as.numeric(b1$piaB)
+
+b1 <- b1[b1$Temperature %in% c(1,2),]
+
+b1$Serotype <- as.factor(b1$Serotype)
+b1$Temperature<- as.factor(b1$Temperature)
+b1$Time <- as.factor(b1$Time)
+b1$concentration<- as.factor(b1$concentration)
+```
+
+
+```{r}
+
+ggplot(b1, aes(x=Time, y=piaB, group=Serotype, color=Serotype))+
+  geom_point(aes(shape=Temperature)) +
+  theme_classic() +
+  facet_grid(concentration~Serotype) +
+  geom_hline(yintercept = 40, lty=2, col='gray')
+```
+## Base model for time course; 
+shows on average loss of 1 Ct at 24 hours, 3.1 Ct at 48 and 72 hours
+```{r}
+tmod1 <- lm(piaB ~ Temperature + Serotype + concentration + Time, data=b1)
+
+summary(tmod1)
+```
+11A is the reference serotype here. At 48 hours, the CT loss for 19F was worse than 11A. Nothing else sticks out
+```{r}
+tmod2 <- lm(piaB ~ Temperature + Serotype + concentration + Time + Time*Serotype, data=b1)
+
+summary(tmod2)
+```
+The loss in Ct was not corse for lower starting concentration 
+```{r}
+tmod3 <- lm(piaB ~ Temperature + Serotype + concentration + Time + Time*concentration, data=b1)
+
+summary(tmod3)
+```
+
+
+
+
+
+
