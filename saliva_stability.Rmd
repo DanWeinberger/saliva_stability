@@ -127,11 +127,18 @@ tmod2 <- lm(piaB ~ Temperature + Serotype + concentration + Time + Time*Serotype
 
 summary(tmod2)
 ```
-The loss in Ct was not corse for lower starting concentration 
+The loss in Ct was not worse for lower starting concentration 
 ```{r}
 tmod3 <- lm(piaB ~ Temperature + Serotype + concentration + Time + Time*concentration, data=b1)
 
 summary(tmod3)
+```
+
+The loss in Ct was not worse by Temprature.
+```{r}
+tmod4 <- lm(piaB ~ Temperature + Serotype + concentration + Time + Time*Temperature, data=b1)
+
+summary(tmod4)
 ```
 
 
